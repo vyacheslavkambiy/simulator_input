@@ -139,7 +139,7 @@ blob_client = blob_service_client.get_blob_client(container=container_name, blob
 
 
 
-#st.sidebar.image(".\.streamlit\Smart_research_unit_violet_150.png",use_column_width=True)
+st.sidebar.image(".\streamlit\Smart_research_unit_violet_150.png",use_column_width=True)
 generator_choice = st.sidebar.radio("Choose a Generator", ("Random Addresses Generator", "Manually Addresses to Coordinates Converter", "CSV to Coordinates Converter"))
 
 
