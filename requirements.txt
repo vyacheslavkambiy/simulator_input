@@ -1,0 +1,17 @@
+json
+os
+streamlit
+geopy.geocoders 
+random
+pandas 
+requests
+datetime    
+azure.storage.blob 
+azure.keyvault.secrets
+
+
+
+
+
+
+azure.identity 
