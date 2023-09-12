@@ -7,8 +7,8 @@ azure.storage.blob
 azure.keyvault.secrets
 azure.identity
 
-import folium
-from streamlit_folium import st_folium, folium_static
+folium
+streamlit_folium
 #json
 #os
 #random
