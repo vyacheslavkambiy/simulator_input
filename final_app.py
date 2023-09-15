@@ -603,7 +603,7 @@ if st.sidebar.button("Show the result on the map"):
     container_name = "output"
     # List all blobs in the container
     blobs = blob_service_client.get_container_client(container_name).list_blobs()
-    blob_prefix = "/log/routes_log_"  # The common part of the blob name
+    blob_prefix = "/app/log/routes_log_"  # The common part of the blob name
 
     # Initialize the BlobServiceClient
     blob_service_client = BlobServiceClient.from_connection_string(connection_string)
