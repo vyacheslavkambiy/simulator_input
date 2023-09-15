@@ -10,36 +10,15 @@ from azure.storage.blob import BlobServiceClient, BlobPrefix
 from azure.identity import DefaultAzureCredential  # Import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 
-
 import folium
 from streamlit_folium import st_folium, folium_static
-
-
 
 # Set page title
 st.title("Älykkäät Tyhjentaminen App")
 # Add instructions for the user
 st.write("First, you need to choose in sidebar menu how you want to provide input data:  \n  Random Addresses Generator: enter the numbers and area to generate random coordinates  \n  Manually type the addresses and optionally names for the places  \n  CSV to Coordinates Converter: upload a your CSV file with location data and select the corresponding column  \n  Then enter input data for simulation and save both files to the Azure")
 
-
 st.sidebar.image(".streamlit/Smart_research_unit_violet_150.png",use_column_width=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -59,10 +38,6 @@ def get_address_info(location):
     municipality = location.raw.get("address", {}).get("municipality", "")  
     country = location.raw.get("address", {}).get("country", "")
     return f"{street}, {city}, {municipality}, {country}"
-
-
-
-
 
 
 generator_choice = st.sidebar.radio("Choose a Generator of addresses:", ("Random Addresses Generator", "Manually Addresses to Coordinates Converter", "CSV to Coordinates Converter"))
@@ -92,7 +67,7 @@ with col1:
     sim_runtime_days = st.number_input("# Simulation runtime (in days)", min_value=1, step=1)
     load_capacity = st.number_input("load capacity, Tonnes", min_value=1.0, step=0.1)
     max_route_duration = st.number_input("max route duration per day , in Minutes (9h - 45min break = 495min)", min_value=1, step=1) 
-    #depots = st.number_input("# number of depots", min_value=1, step=1)
+    
 with col2:
     break_duration = st.number_input("break duration, Minutes #Break Happens after 1/2 of drivetime", min_value=1, step=1)
     num_breaks_per_shift = st.number_input("numbers of brakes per shift", min_value=1, step=1)
@@ -108,7 +83,7 @@ if st.button("Save Input Data to blob"):
         "break_duration": break_duration,
         "num_breaks_per_shift": num_breaks_per_shift,
         "pickup_duration": pickup_duration,
-        #"depots": depots 
+        
     }
 # Save the input data as a JSON file locally
     # Uncomment the following lines if you want to save the JSON file locally
@@ -200,11 +175,6 @@ if generator_choice == "Random Addresses Generator":
         blob_client.upload_blob(json.dumps(updated_geojson_data, indent=2), overwrite=True)
 
         st.write("Data has been saved and uploaded successfully to geojsonfiles Azure blob sim_test_sites.geojson")
-
-
-
-
-
 
 
 def get_coordinates_from_address(address):
@@ -351,34 +321,6 @@ if generator_choice == "CSV to Coordinates Converter":
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #TERMINALS PART
 # Generate a filename
 json_filename = "sim_test_terminals.geojson"
@@ -440,7 +382,7 @@ if generator_choice_depots == "Random depot Addresses Generator":
                 municipality = location.raw.get("address", {}).get("municipality", "")
                 
                 # Create a new feature for the current location
-                new_feature = { "type": "Feature","properties": {"Osoite": address, "Kunta": municipality,"NumTrucks": 1 }, "geometry": { "type": "Point", "coordinates": [lon, lat] }  }
+                new_feature = { "type": "Feature","properties": {"Osoite": address, "Kunta": municipality,"num_vehicles": 1 }, "geometry": { "type": "Point", "coordinates": [lon, lat] }  }
                 
                 new_features.append(new_feature)
 
@@ -456,11 +398,6 @@ if generator_choice_depots == "Random depot Addresses Generator":
         blob_client.upload_blob(json.dumps(updated_geojson_data, indent=2), overwrite=True)
 
         st.write("Data has been saved and uploaded successfully to  Azure blob sim_test_terminals.geojson")
-
-
-
-
-
 
 
 def get_coordinates_from_address(address):
@@ -491,7 +428,7 @@ if generator_choice_depots == "Manually Addresses to Coordinates Converter":
         col1, col2, col3 = st.columns(3)
         with col1: input_address = st.text_input(f"Enter address {i+1}:", key=f"address_{i}", placeholder="Example: Hämeentie 23, Hämeenlinna, Finland")
         with col2: input_name = st.text_input(f"Enter name for address {i+1}:", key=f"place_name_{i}")  #this line for names
-        with col3: input_number_of_trucks = st.number_input(f"Enter the number of trucks for address {i+1}:", min_value=1, value=1, step=1)
+        with col3: num_vehicles = st.number_input(f"Enter the number of trucks for address {i+1}:", min_value=1, value=1, step=1)
         if input_address:
             lat, lon, municipality = get_coordinates_from_address(input_address)
             if lat is not None and lon is not None:
@@ -501,14 +438,14 @@ if generator_choice_depots == "Manually Addresses to Coordinates Converter":
                     "latitude": lat,
                     "longitude": lon,
                     "municipality": municipality,
-                    "num_trucks": input_number_of_trucks,  # Assign the number of trucks from user input
+                    "num_vehicles": num_vehicles,  # Assign the number of trucks from user input
                 }
-                st.write(f"{input_name} Coordinates for '{input_address}', {lat}, {lon}, Number of Trucks: {input_number_of_trucks}" )
+                st.write(f"{input_name} Coordinates for '{input_address}', {lat}, {lon}, num_vehicles: {num_vehicles}" )
 
             
                 new_feature = {
                     "type": "Feature",
-                    "properties": {"Osoite": input_address, "Kunta": municipality, "NumTrucks": input_number_of_trucks},  #number of trucks from user input 
+                    "properties": {"Osoite": input_address, "Kunta": municipality, "num_vehicles": num_vehicles},  #number of trucks from user input 
                     "geometry": {"type": "Point", "coordinates": [lon, lat]}
                 }
 
@@ -678,3 +615,5 @@ st.sidebar.write('\n')
 
 
 st.sidebar.write("Häme University of Applied Sciences  \n  (HAMK) / PO Box 230 13101 Hämeenlinna Finland  \n  +3583 6461")
+
+
