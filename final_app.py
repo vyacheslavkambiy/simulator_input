@@ -16,7 +16,7 @@ from streamlit_folium import st_folium, folium_static
 # Set page title
 st.title("Älykkäät Tyhjentaminen App")
 # Add instructions for the user
-st.write("First, you need to choose in sidebar menu how you want to provide input data:  \n  Random Addresses Generator: enter the numbers and area to generate random coordinates  \n  Manually type the addresses and optionally names for the places  \n  CSV to Coordinates Converter: upload a your CSV file with location data and select the corresponding column  \n  Then enter input data for simulation and save both files to the Azure")
+st.write("First, you need to choose in sidebar menu how you want to provide input data:  \n  Random Addresses Generator: enter the numbers and area (rectangle) to generate random coordinates  \n  Manually type the addresses and optionally names for the places  \n  CSV to Coordinates Converter: upload a your CSV file with location data and select the corresponding column  \n  Then enter input data for simulation and save both files to the Azure")
 
 st.sidebar.image(".streamlit/Smart_research_unit_violet_150.png",use_column_width=True)
 
@@ -64,14 +64,14 @@ blob_client = blob_service_client.get_blob_client(container=container_name, blob
 st.write("Input data for simulation:")
 col1, col2 = st.columns(2)
 with col1: 
-    sim_runtime_days = st.number_input("# Simulation runtime (in days)", min_value=1, step=1)
-    load_capacity = st.number_input("load capacity, Tonnes", min_value=1.0, step=0.1)
-    max_route_duration = st.number_input("max route duration per day , in Minutes (9h - 45min break = 495min)", min_value=1, step=1) 
+    sim_runtime_days = st.number_input("Simulation runtime (in days)", min_value=1, step=1)
+    load_capacity = st.number_input("Load capacity of the truck, Tonnes", min_value=1.0, step=0.1)
+    max_route_duration = st.number_input("Max route duration per day , in Minutes (9h - 45min break = 495min)", min_value=1, step=1) 
     
 with col2:
-    break_duration = st.number_input("break duration, Minutes #Break Happens after 1/2 of drivetime", min_value=1, step=1)
-    num_breaks_per_shift = st.number_input("numbers of brakes per shift", min_value=1, step=1)
-    pickup_duration = st.number_input("pickup duration  time, Minutes", min_value=1, step=1) 
+    break_duration = st.number_input("Break duration, Minutes ,Break Happens after 1/2 of drivetime", min_value=1, step=1)
+    num_breaks_per_shift = st.number_input("Numbers of brakes per shift", min_value=1, step=1)
+    pickup_duration = st.number_input("Pickup duration  time, Minutes", min_value=1, step=1) 
 
 # Show a "Save Input Data" button
 if st.button("Save Input Data to blob"):
@@ -125,10 +125,10 @@ if generator_choice == "Random Addresses Generator":
 
     st.title("Random Addresses Generator")
     num_places = st.number_input("Enter the number of random places:", min_value=1, value=10, step=1)
-    left_up_lat = st.number_input("Enter the latitude of left-up corner:", value=61.0300)
-    left_up_lon = st.number_input("Enter the longitude of left-up corner:", value=24.2050)
-    right_down_lat = st.number_input("Enter the latitude of right-down corner:", value=60.8300)
-    right_down_lon = st.number_input("Enter the longitude of right-down corner:", value=24.7400)
+    left_up_lat = st.number_input("Enter the latitude of left-up corner of rectangle:", value=61.0300)
+    left_up_lon = st.number_input("Enter the longitude of left-up corner of rectangle:", value=24.2050)
+    right_down_lat = st.number_input("Enter the latitude of right-down corner of rectangle:", value=60.8300)
+    right_down_lon = st.number_input("Enter the longitude of right-down corner of rectangle:", value=24.7400)
 
     left_up = (left_up_lat, left_up_lon)
     right_down = (right_down_lat, right_down_lon)
@@ -351,10 +351,10 @@ if generator_choice_depots == "Random depot Addresses Generator":
         left_up = (left_up_lat2, left_up_lon2)
         right_down = (right_down_lat2, right_down_lon2)
     else:
-        left_up_lat2 = st.number_input("Enter the latitude of left-up corner:", value=61.0300)
-        left_up_lon2 = st.number_input("Enter the longitude of left-up corner:", value=24.2050)
-        right_down_lat2 = st.number_input("Enter the latitude of right-down corner:", value=60.8300)
-        right_down_lon2 = st.number_input("Enter the longitude of right-down corner:", value=24.7400)
+        left_up_lat2 = st.number_input("Enter the latitude of left-up corner of rectangle:", value=61.0300)
+        left_up_lon2 = st.number_input("Enter the longitude of left-up corner of rectangle:", value=24.2050)
+        right_down_lat2 = st.number_input("Enter the latitude of right-down corner of rectangle:", value=60.8300)
+        right_down_lon2 = st.number_input("Enter the longitude of right-down corner of rectangle:", value=24.7400)
     left_up = (left_up_lat2, left_up_lon2)
     right_down = (right_down_lat2, right_down_lon2)
     # Load existing GeoJSON file if it exists
@@ -526,6 +526,17 @@ if generator_choice_depots == "Depot addresses from CSV":
 
 st.sidebar.write('\n')
 st.sidebar.write('\n')
+
+## Define the URL of your VM's API endpoint
+#vm_api_url = "http://your_vm_ip:your_api_port/start_application"
+
+#if st.button("Start Application"):
+   # response = requests.post(vm_api_url)
+   # if response.status_code == 200:
+      #  st.success("Application started successfully.")
+   # else:
+     #   st.error(f"Failed to start application. Status code: {response.status_code}")
+
 st.sidebar.write("You can see your result about 10 min after all calculation will be made.")
 if st.sidebar.button("Show the result on the map"):
     
