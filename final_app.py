@@ -253,7 +253,7 @@ if generator_choice == "CSV to Coordinates Converter":
     st.title("CSV to GeoJSON Converter")
 
         # Upload CSV file
-    uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
+    uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"], key="uploader1")
 
     if uploaded_file is not None:
         # Read the uploaded CSV file into a DataFrame
@@ -469,7 +469,7 @@ if generator_choice_depots == "Depot addresses from CSV":
     st.title("CSV to GeoJSON Converter")
 
         # Upload CSV file
-    uploaded_file2 = st.file_uploader("Upload a CSV file", type=["csv"])
+    uploaded_file2 = st.file_uploader("Upload a CSV file", type=["csv"], key="uploader2")
 
     if uploaded_file2 is not None:
         # Read the uploaded CSV file into a DataFrame
