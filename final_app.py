@@ -13,6 +13,8 @@ from azure.keyvault.secrets import SecretClient
 import folium
 from streamlit_folium import st_folium, folium_static
 
+
+from azure.mgmt.compute import ComputeManagementClient
 # Set page title
 st.title("Älykkäät Tyhjentaminen App")
 # Add instructions for the user
@@ -522,10 +524,56 @@ if generator_choice_depots == "Depot addresses from CSV":
             st.write(f"Data has been saved and uploaded successfully to geojsonfiles Azure blob sim_test_terminals.geojson")
 
 
+# Set your Azure subscription ID and resource group name
+subscription_id = 'fa58dc79-671f-4192-99c7-e5c83eb21acb'
+resource_group_name = 'data-benchmarking-2'
+vm_name = 'optimizer-hamk'
+
+# Create a Streamlit app
+st.title("Azure VM Deallocator")
+
+# Create a button to deallocate the VM
+if st.button("Deallocate VM"):
+    try:
+        # Create a DefaultAzureCredential
+        credential = DefaultAzureCredential()
+
+        # Create a ComputeManagementClient
+        compute_client = ComputeManagementClient(credential, subscription_id)
+
+        # Stop (deallocate) the virtual machine
+        compute_client.virtual_machines.deallocate(resource_group_name, vm_name)
+
+        st.success(f"Virtual machine '{vm_name}' has been deallocated.")
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
+
 
 
 st.sidebar.write('\n')
 st.sidebar.write('\n')
+# Define the function to deallocate the Azure VM
+#def deallocate_vm():
+  #  # your Azure VM's resource group and VM name
+  #  resource_group = "data-benchmarking-2"
+  #  vm_name = "optimizer-hamk"
+
+  #  # Azure CLI command to deallocate the VM
+  #  azure_cli_command = f"az vm deallocate --resource-group {resource_group} --name {vm_name}"
+
+  #  # Run the Azure CLI command
+   # try:
+   #     subprocess.run(azure_cli_command, shell=True, check=True)
+   #     st.success("VM deallocated successfully.")
+   # except subprocess.CalledProcessError as e:
+  #      st.error(f"Error: {e}")
+#Streamlit app
+#st.title("Deallocate Azure VM")
+#st.write("Click the button below to deallocate the Azure VM.")
+## a button to deallocate the VM
+#if st.button("Deallocate VM"):
+ #   deallocate_vm()
+
 
 ## Define the URL of your VM's API endpoint
 #vm_api_url = "http://your_vm_ip:your_api_port/start_application"
