@@ -557,10 +557,8 @@ st.sidebar.write('\n')
   #  # your Azure VM's resource group and VM name
   #  resource_group = "data-benchmarking-2"
   #  vm_name = "optimizer-hamk"
-
   #  # Azure CLI command to deallocate the VM
   #  azure_cli_command = f"az vm deallocate --resource-group {resource_group} --name {vm_name}"
-
   #  # Run the Azure CLI command
    # try:
    #     subprocess.run(azure_cli_command, shell=True, check=True)
@@ -573,8 +571,6 @@ st.sidebar.write('\n')
 ## a button to deallocate the VM
 #if st.button("Deallocate VM"):
  #   deallocate_vm()
-
-
 ## Define the URL of your VM's API endpoint
 #vm_api_url = "http://your_vm_ip:your_api_port/start_application"
 
@@ -584,6 +580,8 @@ st.sidebar.write('\n')
       #  st.success("Application started successfully.")
    # else:
      #   st.error(f"Failed to start application. Status code: {response.status_code}")
+
+
 
 st.sidebar.write("You can see your result about 10 min after all calculation will be made.")
 if st.sidebar.button("Show the result on the map"):
