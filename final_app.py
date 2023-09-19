@@ -469,11 +469,11 @@ if generator_choice_depots == "Depot addresses from CSV":
     st.title("CSV to GeoJSON Converter")
 
         # Upload CSV file
-    uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
+    uploaded_file2 = st.file_uploader("Upload a CSV file", type=["csv"])
 
-    if uploaded_file is not None:
+    if uploaded_file2 is not None:
         # Read the uploaded CSV file into a DataFrame
-        df = pd.read_csv(uploaded_file)
+        df = pd.read_csv(uploaded_file2)
 
         # Get column names for user selection
         column_names = df.columns.tolist()
@@ -490,7 +490,7 @@ if generator_choice_depots == "Depot addresses from CSV":
         else:
             address_cols_input = st.text_input("Enter the column names for address (comma-separated)", placeholder="For example: column1,column2,column3....")  # Provide example inside placeholder
             address_cols = [col.strip() for col in address_cols_input.split(",")]
-            address_col = None  # We'll handle this below
+            address_col = None  
 
         if st.button("Convert to GeoJSON"):
             geojson_features = []
