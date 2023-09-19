@@ -541,13 +541,13 @@ if st.button("Deallocate VM"):
         # Create a ComputeManagementClient
         compute_client = ComputeManagementClient(credential, subscription_id)
 
-        # Stop (deallocate) the virtual machine
-        compute_client.virtual_machines.deallocate(resource_group_name, vm_name)
+        # Deallocate the virtual machine
+        operation_poller = compute_client.virtual_machines.begin_deallocate(resource_group_name, vm_name)
+        operation_poller.result()
 
         st.success(f"Virtual machine '{vm_name}' has been deallocated.")
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
-
 
 
 st.sidebar.write('\n')
