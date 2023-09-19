@@ -530,7 +530,7 @@ resource_group_name = 'data-benchmarking-2'
 vm_name = 'optimizer-hamk'
 
 # Create a Streamlit app
-st.title("Azure VM Deallocator")
+st.title("Azure VM Control")
 
 # Create a button to deallocate the VM
 if st.button("Deallocate VM"):
@@ -548,38 +548,25 @@ if st.button("Deallocate VM"):
         st.success(f"Virtual machine '{vm_name}' has been deallocated.")
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
+        
+if st.button("Start VM"):
+    try:
+        # Create a DefaultAzureCredential
+        credential = DefaultAzureCredential()
 
+        # Create a ComputeManagementClient
+        compute_client = ComputeManagementClient(credential, subscription_id)
+
+        # Start the virtual machine
+        operation_poller = compute_client.virtual_machines.begin_start(resource_group_name, vm_name)
+        operation_poller.result()
+
+        st.success(f"Virtual machine '{vm_name}' has been started.")
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
 
 st.sidebar.write('\n')
 st.sidebar.write('\n')
-# Define the function to deallocate the Azure VM
-#def deallocate_vm():
-  #  # your Azure VM's resource group and VM name
-  #  resource_group = "data-benchmarking-2"
-  #  vm_name = "optimizer-hamk"
-  #  # Azure CLI command to deallocate the VM
-  #  azure_cli_command = f"az vm deallocate --resource-group {resource_group} --name {vm_name}"
-  #  # Run the Azure CLI command
-   # try:
-   #     subprocess.run(azure_cli_command, shell=True, check=True)
-   #     st.success("VM deallocated successfully.")
-   # except subprocess.CalledProcessError as e:
-  #      st.error(f"Error: {e}")
-#Streamlit app
-#st.title("Deallocate Azure VM")
-#st.write("Click the button below to deallocate the Azure VM.")
-## a button to deallocate the VM
-#if st.button("Deallocate VM"):
- #   deallocate_vm()
-## Define the URL of your VM's API endpoint
-#vm_api_url = "http://your_vm_ip:your_api_port/start_application"
-
-#if st.button("Start Application"):
-   # response = requests.post(vm_api_url)
-   # if response.status_code == 200:
-      #  st.success("Application started successfully.")
-   # else:
-     #   st.error(f"Failed to start application. Status code: {response.status_code}")
 
 
 
