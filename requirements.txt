@@ -6,7 +6,7 @@ datetime
 azure.storage.blob 
 azure.keyvault.secrets
 azure.identity
-
+azure-mgmt-compute
 folium
 streamlit_folium
 #json
