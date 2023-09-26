@@ -5,20 +5,20 @@ from geopy.geocoders import Nominatim
 import random
 import pandas as pd
 import requests
-from datetime import datetime   #generate a unique filename for each JSON file, by appending a timestamp to the filename
-from azure.storage.blob import BlobServiceClient, BlobPrefix
+from datetime import datetime   #Generate a unique filename for each JSON file, by appending a timestamp to the filename
+from azure.storage.blob import BlobServiceClient, BlobPrefix #Access to blobs
+
 from azure.identity import DefaultAzureCredential  # Import DefaultAzureCredential
-from azure.keyvault.secrets import SecretClient
+from azure.keyvault.secrets import SecretClient #Get secrets
+from azure.mgmt.compute import ComputeManagementClient #To start/stop VM
 
 import folium
 from streamlit_folium import st_folium, folium_static
 
-
-from azure.mgmt.compute import ComputeManagementClient
 # Set page title
 st.title("Älykkäät Tyhjentaminen App")
 # Add instructions for the user
-st.write("First, you need to choose in sidebar menu how you want to provide input data:  \n  Random Addresses Generator: enter the numbers and area (rectangle) to generate random coordinates  \n  Manually type the addresses and optionally names for the places  \n  CSV to Coordinates Converter: upload a your CSV file with location data and select the corresponding column  \n  Then enter input data for simulation and save both files to the Azure")
+st.write("First, you need to choose in sidebar menu how you want to provide input data:  \n  1)Random Addresses Generator: enter the numbers and area (rectangle) to generate random addresses  \n  2)Manually type the addresses and optionally names for the places  \n  3)Addresses from your CSV: upload your CSV file with location data and select the corresponding column (columns)  \n  Save all files to the Azure and press start")
 
 st.sidebar.image(".streamlit/Smart_research_unit_violet_150.png",use_column_width=True)
 
@@ -42,9 +42,9 @@ def get_address_info(location):
     return f"{street}, {city}, {municipality}, {country}"
 
 
-generator_choice = st.sidebar.radio("Choose a Generator of addresses:", ("Random Addresses Generator", "Manually Addresses to Coordinates Converter", "CSV to Coordinates Converter"))
+generator_choice = st.sidebar.radio("Choose a Generator of addresses:", ("Random Addresses Generator", "Manually Addresses to Coordinates Converter", "Addresses from your CSV"))
 
-generator_choice_depots = st.sidebar.radio("Depot addresses:", ("Random depot Addresses Generator", "Manually Addresses to Coordinates Converter", "Depot addresses from CSV"))
+generator_choice_depots = st.sidebar.radio("Choose a Generator of Depot addresses:", ("Random Depot Addresses Generator", "Manually Addresses to Coordinates Converter", "Depot addresses from CSV"))
 
 # Generate a unique filename with a timestamp
 timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -68,10 +68,10 @@ col1, col2 = st.columns(2)
 with col1: 
     sim_runtime_days = st.number_input("Simulation runtime (in days)", min_value=1, step=1)
     load_capacity = st.number_input("Load capacity of the truck, Tonnes", min_value=1.0, step=0.1)
-    max_route_duration = st.number_input("Max route duration per day , in Minutes (9h - 45min break = 495min)", min_value=1, step=1) 
+    max_route_duration = st.number_input("Max route duration per day, Minutes (9h-break=495min)", min_value=1, step=1) 
     
 with col2:
-    break_duration = st.number_input("Break duration, Minutes ,Break Happens after 1/2 of drivetime", min_value=1, step=1)
+    break_duration = st.number_input("Break duration, Minutes ,Break after 1/2 of drivetime", min_value=1, step=1)
     num_breaks_per_shift = st.number_input("Numbers of brakes per shift", min_value=1, step=1)
     pickup_duration = st.number_input("Pickup duration  time, Minutes", min_value=1, step=1) 
 
@@ -107,7 +107,7 @@ if st.button("Save Input Data to blob"):
 
 
 # Generate a filename
-json_filename = "sim_test_sites.geojson"
+json_filename = "sim_test_sites.geojson" #this name will be used in simulation app
 
 # Fetch the Azure Blob Storage connection string from Azure Key Vault using DefaultAzureCredential
 vault_url = "https://keyvaultforhamk.vault.azure.net/"
@@ -251,8 +251,8 @@ if generator_choice == "Manually Addresses to Coordinates Converter":
 
 
 
-if generator_choice == "CSV to Coordinates Converter":
-    st.title("CSV to GeoJSON Converter")
+if generator_choice == "Addresses from your CSV":
+    st.title("Addresses from your CSV")
 
         # Upload CSV file
     uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"], key="uploader1")
@@ -274,7 +274,7 @@ if generator_choice == "CSV to Coordinates Converter":
         if address_option == "Single Column":
             address_col = st.selectbox("Select the column that corresponds to addresses", column_names)
         else:
-            address_cols_input = st.text_input("Enter the column names for address (comma-separated)", placeholder="For example: column1,column2,column3....")  # Provide example inside placeholder
+            address_cols_input = st.text_input("Enter the column names for address (comma-separated)", placeholder="Example: column1,column2,column3...")  # Provide example inside placeholder
             address_cols = [col.strip() for col in address_cols_input.split(",")]
             address_col = None  # We'll handle this below
 
@@ -341,10 +341,10 @@ blob_service_client = BlobServiceClient.from_connection_string(connection_string
 blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
 
 
-if generator_choice_depots == "Random depot Addresses Generator":
+if generator_choice_depots == "Random Depot Addresses Generator":
 
-    st.title("Random depot Addresses Generator")
-    num_places = st.number_input("Enter the number of random depot places:", min_value=1, value=1, step=1)
+    st.title("Random Depot Addresses Generator")
+    num_places = st.number_input("Enter the number of random depot places:", min_value=1, max_value=10, value=1, step=1)
     if "left_up_lat" in locals():
         left_up_lat2 = left_up_lat
         left_up_lon2 = left_up_lon
@@ -369,7 +369,7 @@ if generator_choice_depots == "Random depot Addresses Generator":
 
 
 
-    if st.button("Generate depot Places"):
+    if st.button("Generate Depot Places"):
         random_coordinates = generate_random_coordinates(left_up, right_down, num_places)
         
         geolocator = Nominatim(user_agent="place_finder")
@@ -413,7 +413,7 @@ def get_coordinates_from_address(address):
 
 if generator_choice_depots == "Manually Addresses to Coordinates Converter":
     st.title("Manually Addresses to Coordinates Converter")
-    num_addresses = st.number_input("Enter the number of addresses:", min_value=1, value=1, step=1)
+    num_depots = st.number_input("Enter the number of addresses:", min_value=1, max_value=10, value=1, step=1)
 
     # Load existing GeoJSON file if it exists
     geojson_filename = "./sim_places.geojson"
@@ -425,18 +425,18 @@ if generator_choice_depots == "Manually Addresses to Coordinates Converter":
 
     new_features = []
 
-    for i in range(num_addresses):
+    for i in range(num_depots):
         st.write(f"Address {i+1}")
         col1, col2, col3 = st.columns(3)
-        with col1: input_address = st.text_input(f"Enter address {i+1}:", key=f"address_{i}", placeholder="Example: Hämeentie 23, Hämeenlinna, Finland")
-        with col2: input_name = st.text_input(f"Enter name for address {i+1}:", key=f"place_name_{i}")  #this line for names
-        with col3: num_vehicles = st.number_input(f"Enter the number of trucks for address {i+1}:", min_value=1, value=1, step=1)
+        with col1: input_address = st.text_input(f"Enter address {i+1}:", key=f"depot_address_{i}", placeholder="Hämeentie 23, Hämeenlinna, Finland")
+        with col2: input_name = st.text_input(f"Enter name for address {i+1}:", key=f"depot_name_{i}")  #this line for names
+        with col3: num_vehicles = st.number_input(f"Number of trucks for address {i+1}:", min_value=1, value=1, step=1)
         if input_address:
             lat, lon, municipality = get_coordinates_from_address(input_address)
             if lat is not None and lon is not None:
                 address_info = {
-                    "place_name": input_name,
-                    "address": input_address,
+                    "depot_name": input_name,
+                    "depot_address": input_address,
                     "latitude": lat,
                     "longitude": lon,
                     "municipality": municipality,
@@ -455,7 +455,7 @@ if generator_choice_depots == "Manually Addresses to Coordinates Converter":
             else:
                 st.write(f"Couldn't find coordinates for '{input_address}'")
 
-    if st.button("Save Addresses to GeoJSON"):
+    if st.button("Save Depot Addresses to GeoJSON"):
         all_features = existing_features + new_features
         updated_geojson_data = { "type": "FeatureCollection", "name": "sim_test_terminals", "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },"features": all_features  }
         # Upload the JSON data to Azure Blob Storage
@@ -468,7 +468,7 @@ if generator_choice_depots == "Manually Addresses to Coordinates Converter":
 
 
 if generator_choice_depots == "Depot addresses from CSV":
-    st.title("CSV to GeoJSON Converter")
+    st.title("Depot addresses from your CSV")
 
         # Upload CSV file
     uploaded_file2 = st.file_uploader("Upload a CSV file", type=["csv"], key="uploader2")
@@ -484,7 +484,7 @@ if generator_choice_depots == "Depot addresses from CSV":
         latitude_col = st.selectbox("Select the column that corresponds to latitudes", column_names)
         longitude_col = st.selectbox("Select the column that corresponds to longitudes", column_names)
         name_col = st.selectbox("Select the column that corresponds to municipality", column_names)
-
+        number_of_trucks_col = st.selectbox("Select the column that corresponds to number of trucks", column_names)
         address_option = st.radio("Choose the address format:", ("Single Column", "Multiple Columns"))
 
         if address_option == "Single Column":
@@ -501,7 +501,7 @@ if generator_choice_depots == "Depot addresses from CSV":
                 lat = row[latitude_col]
                 lon = row[longitude_col]
                 name = row[name_col]
-
+                num_vehicles = row[number_of_trucks_col]  # Get number of vehicles from CSV
                 if address_option == "Single Column":
                     address = row[address_col]
                 else:
@@ -511,7 +511,7 @@ if generator_choice_depots == "Depot addresses from CSV":
 
                 feature = {
                     "type": "Feature",
-                    "properties": {"Osoite": address, "Kunta": name},
+                    "properties": {"Osoite": address, "Kunta": name, "num_vehicles": num_vehicles},
                     "geometry": {"type": "Point", "coordinates": [lon, lat]}
                 }
                 geojson_features.append(feature)
@@ -523,33 +523,23 @@ if generator_choice_depots == "Depot addresses from CSV":
 
             st.write(f"Data has been saved and uploaded successfully to geojsonfiles Azure blob sim_test_terminals.geojson")
 
-
+#PART START/STOP VM
 # Set your Azure subscription ID and resource group name
-subscription_id = 'fa58dc79-671f-4192-99c7-e5c83eb21acb'
+vault_url = "https://keyvaultforhamk.vault.azure.net/"
+secret_name = "subscription"
+key_vault_secret = SecretClient(vault_url=vault_url, credential=credential).get_secret(secret_name)
+#Use the fetched subscription_id
+subscription_id = key_vault_secret.value
 resource_group_name = 'data-benchmarking-2'
 vm_name = 'optimizer-hamk'
 
 # Create a Streamlit app
-st.title("Azure VM Control")
-
-# Create a button to deallocate the VM
-if st.button("Deallocate VM"):
-    try:
-        # Create a DefaultAzureCredential
-        credential = DefaultAzureCredential()
-
-        # Create a ComputeManagementClient
-        compute_client = ComputeManagementClient(credential, subscription_id)
-
-        # Deallocate the virtual machine
-        operation_poller = compute_client.virtual_machines.begin_deallocate(resource_group_name, vm_name)
-        operation_poller.result()
-
-        st.success(f"Virtual machine '{vm_name}' has been deallocated.")
-    except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
-        
-if st.button("Start VM"):
+st.title("Press start calculations to continue:")
+# Create two columns
+col1, col2 = st.columns(2)
+# Create a button to start the VM
+       
+if col1.button("Start calculations"):
     try:
         # Create a DefaultAzureCredential
         credential = DefaultAzureCredential()
@@ -565,12 +555,30 @@ if st.button("Start VM"):
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
 
+
+# Create a button to deallocate the VM
+if col2.button("INTERRUPT"):
+    try:
+        # Create a DefaultAzureCredential
+        credential = DefaultAzureCredential()
+
+        # Create a ComputeManagementClient
+        compute_client = ComputeManagementClient(credential, subscription_id)
+
+        # Deallocate the virtual machine
+        operation_poller = compute_client.virtual_machines.begin_deallocate(resource_group_name, vm_name)
+        operation_poller.result()
+
+        st.success(f"Virtual machine '{vm_name}' has been deallocated.")
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
+        
 st.sidebar.write('\n')
 st.sidebar.write('\n')
 
 
 
-st.sidebar.write("You can see your result about 10 min after all calculation will be made.")
+st.sidebar.write("You can see your result about 10 min after all calculations will be made.")
 if st.sidebar.button("Show the result on the map"):
     
     # Your connection string and container name
@@ -649,15 +657,10 @@ if st.sidebar.button("Show the result on the map"):
 # st.sidebar.write('\n')
 # st.sidebar.write('\n')
 # st.sidebar.write('\n')
-# st.sidebar.write('\n')
-# st.sidebar.write('\n')
 st.sidebar.write('\n')
 st.sidebar.write('\n')
 st.sidebar.write('\n')
 st.sidebar.write('\n')
-st.sidebar.write('\n')
-
 
 st.sidebar.write("Häme University of Applied Sciences  \n  (HAMK) / PO Box 230 13101 Hämeenlinna Finland  \n  +3583 6461")
-
 
