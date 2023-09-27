@@ -181,7 +181,7 @@ if generator_choice == "Random Addresses Generator":
 
 def get_coordinates_from_address(address):
     geolocator = Nominatim(user_agent="place_finder")
-    location = geolocator.geocode(address)
+    location = geolocator.geocode(address, timeout=None)
     if location:
         return location.latitude,location.longitude, location.raw.get("address", {}).get("municipality", "") 
     return None, None, None
@@ -205,7 +205,7 @@ if generator_choice == "Manually Addresses to Coordinates Converter":
     for i in range(num_addresses):
         st.write(f"Address {i+1}")
         col1, col2= st.columns(2)
-        with col1: input_address = st.text_input(f"Enter address {i+1}:", key=f"address_{i}", placeholder="Example: Hämeentie 23, Hämeenlinna, Finland")
+        with col1: input_address = st.text_input(f"Enter address {i+1}:", key=f"address_{i}", placeholder="Example: Ojakatu 2, Forssa, Finland")
         with col2: input_name = st.text_input(f"Enter name for address {i+1}:", key=f"place_name_{i}")  #this line for names
         
         if input_address:
@@ -264,41 +264,43 @@ if generator_choice == "Addresses from your CSV":
         # Get column names for user selection
         column_names = df.columns.tolist()
 
-        # Get user inputs for mapping columns to attributes
-        latitude_col = st.selectbox("Select the column that corresponds to latitudes", column_names)
-        longitude_col = st.selectbox("Select the column that corresponds to longitudes", column_names)
-        name_col = st.selectbox("Select the column that corresponds to municipality", column_names)
+        # # Get user inputs for mapping columns to attributes
+        # latitude_col = st.selectbox("Select the column that corresponds to latitudes", column_names, key="latitude_col1")
+        # longitude_col = st.selectbox("Select the column that corresponds to longitudes", column_names, key="longitude_col1")
+        # name_col = st.selectbox("Select the column that corresponds to municipality", column_names, key="name_col1")
 
-        address_option = st.radio("Choose the address format:", ("Single Column", "Multiple Columns"))
+        address_option = st.radio("Choose the address format:", ("Single Column", "Multiple Columns"), key="address_option1")
 
         if address_option == "Single Column":
-            address_col = st.selectbox("Select the column that corresponds to addresses", column_names)
+            address_col = st.selectbox("Select the column that corresponds to address", column_names)
         else:
-            address_cols_input = st.text_input("Enter the column names for address (comma-separated)", placeholder="Example: column1,column2,column3...")  # Provide example inside placeholder
+            st.text(column_names)
+            address_cols_input = st.text_input("Enter all column names(case-sensitive) for the address (comma-separated)", placeholder="Just names like: Column1,column2,column3...", key="0")  # Provide example inside placeholder
             address_cols = [col.strip() for col in address_cols_input.split(",")]
-            address_col = None  # We'll handle this below
+            address_col = None  #below
 
-        if st.button("Convert to GeoJSON"):
+        if st.button("Convert to GeoJSON", key="convert_button1"):
             geojson_features = []
 
             for index, row in df.iterrows():
-                lat = row[latitude_col]
-                lon = row[longitude_col]
-                name = row[name_col]
+                # name = row[name_col]
 
                 if address_option == "Single Column":
                     address = row[address_col]
+                    lat, lon, municipality = get_coordinates_from_address(address)
                 else:
                     # Combine multiple address columns into a single value
                     address_components = [row[col] for col in address_cols]
                     address = ", ".join(filter(None, address_components))
+                    lat, lon, municipality = get_coordinates_from_address(address)
 
-                feature = {
-                    "type": "Feature",
-                    "properties": {"Osoite": address, "Kunta": name},
-                    "geometry": {"type": "Point", "coordinates": [lon, lat]}
-                }
-                geojson_features.append(feature)
+                if lat is not None and lon is not None:
+                    feature = {
+                        "type": "Feature",
+                        "properties": {"Osoite": address, "Kunta": municipality},
+                        "geometry": {"type": "Point", "coordinates": [lon, lat]}
+                    }
+                    geojson_features.append(feature)
 
             geojson_data = {
                 "type": "FeatureCollection",
@@ -404,7 +406,7 @@ if generator_choice_depots == "Random Depot Addresses Generator":
 
 def get_coordinates_from_address(address):
     geolocator = Nominatim(user_agent="place_finder")
-    location = geolocator.geocode(address)
+    location = geolocator.geocode(address, timeout=None)
     if location:
         return location.latitude,location.longitude, location.raw.get("address", {}).get("municipality", "") 
     return None, None, None
@@ -428,7 +430,7 @@ if generator_choice_depots == "Manually Addresses to Coordinates Converter":
     for i in range(num_depots):
         st.write(f"Address {i+1}")
         col1, col2, col3 = st.columns(3)
-        with col1: input_address = st.text_input(f"Enter address {i+1}:", key=f"depot_address_{i}", placeholder="Hämeentie 23, Hämeenlinna, Finland")
+        with col1: input_address = st.text_input(f"Enter address {i+1}:", key=f"depot_address_{i}", placeholder="Ojakatu 2, Forssa, Finland")
         with col2: input_name = st.text_input(f"Enter name for address {i+1}:", key=f"depot_name_{i}")  #this line for names
         with col3: num_vehicles = st.number_input(f"Number of trucks for address {i+1}:", min_value=1, value=1, step=1)
         if input_address:
@@ -468,61 +470,118 @@ if generator_choice_depots == "Manually Addresses to Coordinates Converter":
 
 
 if generator_choice_depots == "Depot addresses from CSV":
-    st.title("Depot addresses from your CSV")
+    st.title("Depots Part")
+    default_num_vehicles = st.checkbox("Set this if you want more than 1 vehicle for each Depot", key="default_num_vehicles_checkbox")
+
+    if not default_num_vehicles:
+        
+        st.header("Depot Addresses from Your CSV with 1 Vehicle for Each Depot")
+        # Upload CSV file
+        uploaded_file2_1 = st.file_uploader("Upload a CSV file", type=["csv"], key="uploader2_1")
+
+        if uploaded_file2_1 is not None:
+            # Read the uploaded CSV file into a DataFrame
+            df = pd.read_csv(uploaded_file2_1)
+            # Get column names for user selection
+            column_names = df.columns.tolist()
+            address_option2 = st.radio("Choose the address format:", ("Single Column", "Multiple Columns"), key="address_option2")
+
+            if address_option2 == "Single Column":
+                address_col = st.selectbox("Select the column that corresponds to addresses", column_names)
+            else:
+                st.text(column_names)
+                address_cols_input = st.text_input("Enter all column names(case-sensitive) for the address (comma-separated)", placeholder="Just names like: Column1,column2,column3...", key="1")  # Provide example inside placeholder
+                address_cols = [col.strip() for col in address_cols_input.split(",")]
+                address_col = None  
+
+            if st.button("Convert to GeoJSON", key="convert_button2_1"):
+                geojson_features = []
+
+                for index, row in df.iterrows():
+                    
+                    if address_option2 == "Single Column":
+                        address = row[address_col]
+                        lat, lon, municipality = get_coordinates_from_address(address)
+                    else:
+                        # Combine multiple address columns into a single value
+                        
+                        address_components = [row[col] for col in address_cols]
+                        address = ", ".join(filter(None, address_components))
+                        lat, lon, municipality = get_coordinates_from_address(address)
+
+                    lat, lon, municipality = get_coordinates_from_address(address)
+
+                    if lat is not None and lon is not None:
+                        feature = {
+                            "type": "Feature",
+                            "properties": {"Osoite": address, "Kunta": municipality, "num_vehicles": 1},
+                            "geometry": {"type": "Point", "coordinates": [lon, lat]}
+                        }
+                        geojson_features.append(feature)
+
+                geojson_data = updated_geojson_data = { "type": "FeatureCollection", "name": "sim_test_terminals", "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },"features": geojson_features  }
+
+                # Upload the JSON data to Azure Blob Storage
+                blob_client.upload_blob(json.dumps(geojson_data, indent=2), overwrite=True)
+
+                st.write(f"Data has been saved and uploaded successfully to geojsonfiles Azure blob sim_test_terminals.geojson")
+    
+    else:
+        st.header("Corresponding Columns from Your CSV with the Number of Vehicles and Depot Addresses")
 
         # Upload CSV file
-    uploaded_file2 = st.file_uploader("Upload a CSV file", type=["csv"], key="uploader2")
+        uploaded_file2_2 = st.file_uploader("Upload a CSV file", type=["csv"], key="uploader2_2")
 
-    if uploaded_file2 is not None:
-        # Read the uploaded CSV file into a DataFrame
-        df = pd.read_csv(uploaded_file2)
+        if uploaded_file2_2 is not None:
+            # Read the uploaded CSV file into a DataFrame
+            df = pd.read_csv(uploaded_file2_2)
+            # Get column names for user selection
+            column_names = df.columns.tolist()
 
-        # Get column names for user selection
-        column_names = df.columns.tolist()
+            # Replace 'number_of_trucks' with the actual column name for the number of trucks
+            num_vehicles_col = st.selectbox("Select the column that corresponds to the number of vehicles for each depot", column_names, key="num_trucks_col")
+            address_option2 = st.radio("Choose the address format:", ("Single Column", "Multiple Columns"), key="address_option2")
 
-        # Get user inputs for mapping columns to attributes
-        latitude_col = st.selectbox("Select the column that corresponds to latitudes", column_names)
-        longitude_col = st.selectbox("Select the column that corresponds to longitudes", column_names)
-        name_col = st.selectbox("Select the column that corresponds to municipality", column_names)
-        number_of_trucks_col = st.selectbox("Select the column that corresponds to number of trucks", column_names)
-        address_option = st.radio("Choose the address format:", ("Single Column", "Multiple Columns"))
+            if address_option2 == "Single Column":
+                address_col = st.selectbox("Select the column that corresponds to addresses", column_names)
+            else:
+                st.text(column_names)
+                address_cols_input = st.text_input("Enter all column names(case-sensitive) for the address (comma-separated)", placeholder="Just names like: Column1,column2,column3...", key="2")  # Provide an example inside the placeholder
+                address_cols = [col.strip() for col in address_cols_input.split(",")]
+                address_col = None  
 
-        if address_option == "Single Column":
-            address_col = st.selectbox("Select the column that corresponds to addresses", column_names)
-        else:
-            address_cols_input = st.text_input("Enter the column names for address (comma-separated)", placeholder="For example: column1,column2,column3....")  # Provide example inside placeholder
-            address_cols = [col.strip() for col in address_cols_input.split(",")]
-            address_col = None  
+            if st.button("Convert to GeoJSON", key="convert_button2_2"):
+                geojson_features = []
 
-        if st.button("Convert to GeoJSON"):
-            geojson_features = []
+                for index, row in df.iterrows():
+                    
+                    if address_option2 == "Single Column":
+                        address = row[address_col]
+                        lat, lon, municipality = get_coordinates_from_address(address)
+                    else:
+                        # Combine multiple address columns into a single value
+                        address_components = [row[col] for col in address_cols]
+                        address = ", ".join(filter(None, address_components))
+                        lat, lon, municipality = get_coordinates_from_address(address)
 
-            for index, row in df.iterrows():
-                lat = row[latitude_col]
-                lon = row[longitude_col]
-                name = row[name_col]
-                num_vehicles = row[number_of_trucks_col]  # Get number of vehicles from CSV
-                if address_option == "Single Column":
-                    address = row[address_col]
-                else:
-                    # Combine multiple address columns into a single value
-                    address_components = [row[col] for col in address_cols]
-                    address = ", ".join(filter(None, address_components))
+                    num_vehicles = row[num_vehicles_col.strip()]
 
-                feature = {
-                    "type": "Feature",
-                    "properties": {"Osoite": address, "Kunta": name, "num_vehicles": num_vehicles},
-                    "geometry": {"type": "Point", "coordinates": [lon, lat]}
-                }
-                geojson_features.append(feature)
+                    lat, lon, municipality = get_coordinates_from_address(address)
 
-            geojson_data = updated_geojson_data = { "type": "FeatureCollection", "name": "sim_test_terminals", "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },"features": geojson_features  }
+                    if lat is not None and lon is not None:
+                        feature = {
+                            "type": "Feature",
+                            "properties": {"Osoite": address, "Kunta": municipality, "num_vehicles": num_vehicles},
+                            "geometry": {"type": "Point", "coordinates": [lon, lat]}
+                        }
+                        geojson_features.append(feature)
 
-            # Upload the JSON data to Azure Blob Storage
-            blob_client.upload_blob(json.dumps(geojson_data, indent=2), overwrite=True)
+                geojson_data = updated_geojson_data = { "type": "FeatureCollection", "name": "sim_test_terminals", "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },"features": geojson_features  }
 
-            st.write(f"Data has been saved and uploaded successfully to geojsonfiles Azure blob sim_test_terminals.geojson")
+                # Upload the JSON data to Azure Blob Storage
+                blob_client.upload_blob(json.dumps(geojson_data, indent=2), overwrite=True)
 
+                st.write(f"Data has been saved and uploaded successfully to geojsonfiles Azure blob sim_test_terminals.geojson")
 #PART START/STOP VM
 # Set your Azure subscription ID and resource group name
 vault_url = "https://keyvaultforhamk.vault.azure.net/"
@@ -648,9 +707,53 @@ if st.sidebar.button("Show the result on the map"):
             folium.PolyLine(locations=coordinates, color=color).add_to(m)
         #st_data = st_folium(m, width=700)
         folium_static(m)
-        
+     
     else:
         st.write("No blobs found in the container with the specified prefix.")
+
+
+
+st.write('\n')
+st.write('\n')
+st.write('\n')
+st.write('\n  You can download files here after calculations:')
+# Use the fetched connection string
+vault_url = "https://keyvaultforhamk.vault.azure.net/"
+secret_name = "inputdatatoazureblob"  # Replace with the name of your secret
+credential = DefaultAzureCredential()
+key_vault_secret = SecretClient(vault_url=vault_url, credential=credential).get_secret(secret_name)
+connection_string = key_vault_secret.value
+container_name = "output"
+
+# Initialize the BlobServiceClient
+blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+# List all blobs in the container
+blobs = blob_service_client.get_container_client(container_name).list_blobs()
+# Create a list to store blob names
+blob_names = [blob.name for blob in blobs]
+
+# Dropdown to select a blob
+selected_blob = st.selectbox("Select a File to Download from Azure", blob_names)
+
+# Input field for specifying the local file path
+local_file_path = st.text_input("Specify Local File Path where to save:", selected_blob)
+if st.button("Download Selected File"):
+    try:
+        # Download the selected blob and save it to the specified local file path
+        blob_client = blob_service_client.get_blob_client(container=container_name, blob=selected_blob)
+        blob_data = blob_client.download_blob()
+
+        # Ensure the user-specified directory exists
+        download_dir = os.path.dirname(local_file_path)
+        os.makedirs(download_dir, exist_ok=True)
+
+        with open(local_file_path, "wb") as f:
+            f.write(blob_data.readall())
+
+        st.success(f"Downloaded {selected_blob} to {local_file_path}")
+    except Exception as e:
+        st.error(f"Error downloading {selected_blob}: {str(e)}")
+
     
 
 
@@ -661,6 +764,4 @@ st.sidebar.write('\n')
 st.sidebar.write('\n')
 st.sidebar.write('\n')
 st.sidebar.write('\n')
-
 st.sidebar.write("Häme University of Applied Sciences  \n  (HAMK) / PO Box 230 13101 Hämeenlinna Finland  \n  +3583 6461")
-
