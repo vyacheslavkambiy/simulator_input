@@ -275,7 +275,7 @@ if generator_choice == "Addresses from your CSV":
             address_col = st.selectbox("Select the column that corresponds to address", column_names)
         else:
             st.text(column_names)
-            address_cols_input = st.text_input("Enter all column names(case-sensitive) for the address (comma-separated)", placeholder="Just names like: Column1,column2,column3...", key="0")  # Provide example inside placeholder
+            address_cols_input = st.text_input("Enter all column names(case-sensitive) for the address (comma-separated). Address in order: Street N,City,Country,", placeholder="like: Column1,column2,column3...", key="0")  # Provide example inside placeholder
             address_cols = [col.strip() for col in address_cols_input.split(",")]
             address_col = None  #below
 
@@ -490,7 +490,7 @@ if generator_choice_depots == "Depot addresses from CSV":
                 address_col = st.selectbox("Select the column that corresponds to addresses", column_names)
             else:
                 st.text(column_names)
-                address_cols_input = st.text_input("Enter all column names(case-sensitive) for the address (comma-separated)", placeholder="Just names like: Column1,column2,column3...", key="1")  # Provide example inside placeholder
+                address_cols_input = st.text_input("Enter all column names(case-sensitive) for the address (comma-separated). Address in order: Street N,City,Country,", placeholder="like: Column1,column2,column3...", key="1")  # Provide example inside placeholder
                 address_cols = [col.strip() for col in address_cols_input.split(",")]
                 address_col = None  
 
@@ -546,7 +546,7 @@ if generator_choice_depots == "Depot addresses from CSV":
                 address_col = st.selectbox("Select the column that corresponds to addresses", column_names)
             else:
                 st.text(column_names)
-                address_cols_input = st.text_input("Enter all column names(case-sensitive) for the address (comma-separated)", placeholder="Just names like: Column1,column2,column3...", key="2")  # Provide an example inside the placeholder
+                address_cols_input = st.text_input("Enter all column names(case-sensitive) for the address (comma-separated). Address in order: Street N,City,Country,", placeholder="like: Column1,column2,column3...", key="2")  # Provide an example inside the placeholder
                 address_cols = [col.strip() for col in address_cols_input.split(",")]
                 address_col = None  
 
